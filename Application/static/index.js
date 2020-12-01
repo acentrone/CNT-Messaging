@@ -9,9 +9,9 @@ async function add_messages(msg, scroll){
     }
     var global_name = await load_name()
 
-    var content = '<div class="container">' + '<b style="color:#1087F6" class="right">'+msg.name+'</b><p>' + msg.message +'</p><span class="time-right">' + n + '</span></div>'
+    var content = '<div class="container">' + '<b style="color:#FFFFFF" class="left">'+msg.name+'</b><p style="color:#FFFFFF">' + msg.message + msg.public_key + '</p><span class="time-right">' + n + '</span></div>'
     if (global_name == msg.name){
-      content = '<div class="container darker">' + '<b style="color:#000" class="left">'+msg.name+'</b><p>' + msg.message +'</p><span class="time-left">' + n + '</span></div>'
+      content = '<div class="container darker">' + '<b style="color:#FFFFFF" class="right">'+msg.name+'</b><p>' + msg.message + msg.public_key + '</p><span class="time-left">' + n + '</span></div>'
     }
     // update div
     var messageDiv = document.getElementById("messages")
@@ -31,7 +31,17 @@ async function load_name(){
       }).then(function (text) {
           return text["name"]
       });
-};
+}
+
+
+async function load_key(){
+  return await fetch('/get_key')
+       .then(async function (response) {
+          return await response.json();
+      }).then(function (text) {
+          return text["public_key"]
+      });
+}
 
 
 async function load_messages() {
@@ -97,9 +107,10 @@ function dateNow() {
 var socket = io.connect('http://' + document.domain + ':' + location.port);
   socket.on( 'connect', async function() {
     var usr_name = await load_name()
+    let pub_key = await load_key()
     if (usr_name != ""){
       socket.emit( 'event', {
-        message: usr_name + ' just connected to the server!',
+        message: usr_name + ' just connected to the server with public key: ' + pub_key,
         connect: true
       } )
     }
@@ -117,7 +128,8 @@ var socket = io.connect('http://' + document.domain + ':' + location.port);
       // send message to other users
       socket.emit( 'event', {
         message : user_input,
-        name: user_name
+        name: user_name,
+        public_key: pub_key
       } )
     } )
   } )
@@ -125,20 +137,3 @@ var socket = io.connect('http://' + document.domain + ':' + location.port);
   socket.on( 'message response', function( msg ) {
     add_messages(msg, true)
   })
-
-window.onload = async function() {
-  var msgs = await load_messages()
-  for (i = 0; i < msgs.length; i++){
-    scroll = false
-    if (i == msgs.length-1) {scroll = true}
-    add_messages(msgs[i], scroll)
-  }
-
-  let name = await load_name()
-  if (name != ""){
-    $("#login").hide();
-  }else{
-    $("#logout").hide();
-  }
-
-}

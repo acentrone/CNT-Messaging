@@ -10,7 +10,7 @@ NAME_KEY = 'name'
 MSG_LIMIT = 20
 
 # Global variables
-PUBLIC_KEY = 'key'
+PUBLIC_KEY = 'KEY'
 
 
 # VIEWS
@@ -19,19 +19,28 @@ PUBLIC_KEY = 'key'
 @view.route("/login", methods=["POST", "GET"])
 def login():
     """
-    displays main login page and handles saving name in session
+    displays main login page and handles saving session variables
     :exception POST
     :return: None
     """
     if request.method == "POST":  # if user input a name
         name = request.form["inputName"]
         public_key = request.form["publicKey"]
+        session[PUBLIC_KEY] = ''
         if len(name) >= 2:
             if len(public_key) >= 2:
-                session[NAME_KEY] = name
-                session['public_key'] = public_key
-                flash(f'You were successfully logged in as {name} with public key {public_key}.')
-                return redirect(url_for("views.home"))
+                if db.get_key() == '':
+                    session[NAME_KEY] = name
+                    session[PUBLIC_KEY] = public_key
+                    db.save_key(public_key)
+                    flash(f'You were successfully logged in as {name} with public key {public_key}.')
+                    return redirect(url_for("views.home"))
+                elif public_key == db.get_key():
+                    session[NAME_KEY] = name
+                    flash(f'You were successfully logged in as {name} with public key {public_key}.')
+                    return redirect(url_for("views.home"))
+                else:
+                    flash("1Public key: {public_key} does not match session. Try again.")
             else:
                 flash("1Key must be at least 8 characters.")
         else:
@@ -64,19 +73,6 @@ def home():
     return render_template("index.html", **{"session": session})
 
 
-'''
-@view.route("/history")
-def history():
-    if NAME_KEY not in session:
-        flash("0Please login before viewing message history")
-        return redirect(url_for("views.login"))
-
-    json_messages = get_history(session[NAME_KEY])
-    print(json_messages)
-    return render_template("history.html", **{"history": json_messages})
-'''
-
-
 @view.route("/get_name")
 def get_name():
     """
@@ -85,7 +81,19 @@ def get_name():
     data = {"name": ""}
     if NAME_KEY in session:
         data = {"name": session[NAME_KEY]}
-        print(session[NAME_KEY])
+    return jsonify(data)
+
+
+@view.route("/get_key")
+def get_key():
+    """
+    :return: a json object storing public key
+    """
+    data = {"public_key": ""}
+    if PUBLIC_KEY in session:
+        data = {"public_key": session[PUBLIC_KEY]}
+    # db.save_key(session[PUBLIC_KEY])
+    print("GET KEY: ", db.get_key())
     return jsonify(data)
 
 
@@ -95,40 +103,8 @@ def get_messages():
     :return: all messages stored in mock database
     """
     messages = db.get_all_messages(MSG_LIMIT)
-    # messages = remove_seconds_from_messages(msgs)
 
     return jsonify(messages)
-
-
-'''
-@view.route("/get_history")
-def get_history(name):
-    """
-    :param name: str
-    :return: all messages by name of user
-    """
-    db = DataBase()
-    msgs = db.get_messages_by_name(name)
-    messages = remove_seconds_from_messages(msgs)
-
-    return messages
-'''
-
-
-# UTILITIES
-def remove_seconds_from_messages(msgs):
-    """
-    removes the seconds from all messages
-    :param msgs: list
-    :return: list
-    """
-    messages = []
-    for msg in msgs:
-        message = msg
-        message["time"] = remove_seconds(message["time"])
-        messages.append(message)
-
-    return messages
 
 
 def remove_seconds(msg):

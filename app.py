@@ -4,9 +4,9 @@ from flask import session
 from flask_socketio import SocketIO
 import time
 from Application import create_app
+from Application.crypt import des3_encrypt, des3_decrypt, Random, DES3
 import config
-
-from Application.mockdb import DataBase
+from config import db
 
 # SETUP
 app = create_app()
@@ -24,10 +24,34 @@ def handle_my_custom_event(json, methods=['GET', 'POST']):
     :param methods: POST GET
     :return: None
     """
+    print(json)
     data = dict(json)
+    # encrypt plaintext
+    key = db.get_key()
+    # iv = key[-8:]
+    iv = Random.new().read(DES3.block_size)  # DES3.block_size==8
 
+    ciphertext = des3_encrypt(key, iv, data["message"])
+    print(str(ciphertext))
+
+    # save encrypted messages in database
     if "name" in data:
-        config.db.save_message(data["name"], data["message"])
+        config.db.save_message(data["name"], str(ciphertext))
+
+    data["message"] = ciphertext
+
+    print("message:")
+    print(data["message"])
+
+    plaintext = des3_decrypt(key, iv, ciphertext)
+
+    print("Ciphertext: ", ciphertext)
+    print("Plaintext: ", plaintext)
+
+    ciphertext = str(ciphertext)
+    plaintext = str(plaintext)
+
+    json["message"] = plaintext + "\nCiphertext:" + ciphertext
 
     socketio.emit('message response', json)
 

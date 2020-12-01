@@ -1,6 +1,4 @@
 from datetime import datetime
-import time
-from .crypt import des3_encrypt, des3_decrypt
 from flask import session
 
 
@@ -11,6 +9,7 @@ class DataBase:
 
     def __init__(self):
         self.list_of_messages = []
+        self.public_key = ''
 
     def get_all_messages(self, limit=100, name=None):
         """
@@ -33,16 +32,29 @@ class DataBase:
 
     def save_message(self, name, msg):
         """
-        saves the encrypted message to the mock database
+        saves the ciphertext message to the mock database
+        :param publickey: str
         :param messages: list
         :param name: str
         :param msg: str
         :return: None
         """
         # encrypt plaintext
-        hashed_key = session['public_key']
-        print(hashed_key)
-        iv = hashed_key[-8:]
-        ciphertext = des3_encrypt(hashed_key, iv, msg)
+        ciphertext = msg
         self.list_of_messages.append({'Name': name, 'Cipher': ciphertext, 'TS': datetime.now()})
         print(self.list_of_messages)
+
+    def save_key(self, key):
+        """
+        saves the key in mock database
+        :param key:
+        :return: none
+        """
+        self.public_key = key
+
+    def get_key(self):
+        """
+        returns stored key
+        :return: key str
+        """
+        return self.public_key
