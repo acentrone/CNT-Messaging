@@ -34,7 +34,7 @@
 .form {
   position: relative;
   z-index: 1;
-  background: #292929;
+  background: #343A40;
   max-width: 360px;
   margin: 0 auto 100px;
   padding: 45px;
@@ -83,15 +83,20 @@
   display: block;
   clear: both;
 }
+.login-text {
+    color: #FFFFFF;
+    margin-bottom: 20px;
+}
 
 </style>
 
 <div class="login-page">
   <div class="form">
     <form class="login-form" action="#" method="POST">
+      <h2 class="login-text">Sign into chat</h2>
       <input type="text" name="inputName" id="inputName" placeholder="Your Name"/>
       <input type="text" name="publicKey" id="publicKey" placeholder="Public Key"/>
-      <button type="submit" class="btn btn-success mb-2">Submit</button>
+      <button type="submit" class="btn btn-success mb-2">Log in</button>
     </form>
   </div>
 </div>

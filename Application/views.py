@@ -28,7 +28,7 @@ def login():
         public_key = request.form["publicKey"]
         session[PUBLIC_KEY] = ''
         if len(name) >= 2:
-            if len(public_key) >= 2:
+            if len(public_key) >= 8:
                 if db.get_key() == '':
                     session[NAME_KEY] = name
                     session[PUBLIC_KEY] = public_key
